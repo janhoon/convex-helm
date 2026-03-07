@@ -1,0 +1,8 @@
+{
+  "packages": {
+    "charts/convex-helm": {
+      "release-type": "helm",
+      "component": "convex-helm"
+    }
+  }
+}
