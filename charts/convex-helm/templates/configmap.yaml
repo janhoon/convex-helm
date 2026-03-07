@@ -1,0 +1,64 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "convex-helm.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "convex-helm.labels" . | nindent 4 }}
+data:
+  INSTANCE_NAME: {{ .Values.instance.name | quote }}
+  CONVEX_CLOUD_ORIGIN: {{ .Values.urls.cloudOrigin | quote }}
+  CONVEX_SITE_ORIGIN: {{ .Values.urls.siteOrigin | quote }}
+  RUST_LOG: {{ .Values.logging.level | quote }}
+  {{- if .Values.logging.redactLogsToClient }}
+  REDACT_LOGS_TO_CLIENT: "true"
+  {{- end }}
+  {{- if .Values.telemetry.disableBeacon }}
+  DISABLE_BEACON: "true"
+  {{- end }}
+  {{- if .Values.metrics.enabled }}
+  DISABLE_METRICS_ENDPOINT: "false"
+  {{- else }}
+  DISABLE_METRICS_ENDPOINT: "true"
+  {{- end }}
+  {{- if .Values.database.doNotRequireSsl }}
+  DO_NOT_REQUIRE_SSL: "true"
+  {{- end }}
+  {{- if eq .Values.storage.type "s3" }}
+  AWS_REGION: {{ .Values.storage.s3.region | quote }}
+  S3_STORAGE_EXPORTS_BUCKET: {{ .Values.storage.s3.buckets.exports | quote }}
+  S3_STORAGE_SNAPSHOT_IMPORTS_BUCKET: {{ .Values.storage.s3.buckets.snapshotImports | quote }}
+  S3_STORAGE_MODULES_BUCKET: {{ .Values.storage.s3.buckets.modules | quote }}
+  S3_STORAGE_FILES_BUCKET: {{ .Values.storage.s3.buckets.files | quote }}
+  S3_STORAGE_SEARCH_BUCKET: {{ .Values.storage.s3.buckets.search | quote }}
+  {{- if .Values.storage.s3.endpointUrl }}
+  S3_ENDPOINT_URL: {{ .Values.storage.s3.endpointUrl | quote }}
+  {{- end }}
+  {{- if .Values.storage.s3.forcePathStyle }}
+  AWS_S3_FORCE_PATH_STYLE: "true"
+  {{- end }}
+  {{- if .Values.storage.s3.disableChecksums }}
+  AWS_S3_DISABLE_CHECKSUMS: "true"
+  {{- end }}
+  {{- if .Values.storage.s3.disableSse }}
+  AWS_S3_DISABLE_SSE: "true"
+  {{- end }}
+  {{- end }}
+  {{- with .Values.concurrency.maxConcurrentQueries }}
+  APPLICATION_MAX_CONCURRENT_QUERIES: {{ . | quote }}
+  {{- end }}
+  {{- with .Values.concurrency.maxConcurrentMutations }}
+  APPLICATION_MAX_CONCURRENT_MUTATIONS: {{ . | quote }}
+  {{- end }}
+  {{- with .Values.concurrency.maxConcurrentV8Actions }}
+  APPLICATION_MAX_CONCURRENT_V8_ACTIONS: {{ . | quote }}
+  {{- end }}
+  {{- with .Values.concurrency.maxConcurrentNodeActions }}
+  APPLICATION_MAX_CONCURRENT_NODE_ACTIONS: {{ . | quote }}
+  {{- end }}
+  {{- with .Values.concurrency.actionsUserTimeoutSecs }}
+  ACTIONS_USER_TIMEOUT_SECS: {{ . | quote }}
+  {{- end }}
+  {{- with .Values.concurrency.documentRetentionDelay }}
+  DOCUMENT_RETENTION_DELAY: {{ . | quote }}
+  {{- end }}

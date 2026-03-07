@@ -1,0 +1,17 @@
+{{- if and .Values.metrics.enabled .Values.metrics.prometheusRule.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "convex-helm.fullname" . }}
+  namespace: {{ .Values.metrics.prometheusRule.namespace | default .Release.Namespace }}
+  labels:
+    {{- include "convex-helm.labels" . | nindent 4 }}
+    {{- with .Values.metrics.prometheusRule.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  groups:
+    - name: {{ include "convex-helm.fullname" . }}
+      rules:
+        {{- toYaml .Values.metrics.prometheusRule.rules | nindent 8 }}
+{{- end }}

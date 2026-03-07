@@ -1,0 +1,59 @@
+{{- if .Values.networkPolicy.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "convex-helm.fullname" . }}-backend
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "convex-helm.backend.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "convex-helm.backend.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Ingress
+  ingress:
+    # Allow traffic from dashboard
+    {{- if .Values.dashboard.enabled }}
+    - from:
+        - podSelector:
+            matchLabels:
+              {{- include "convex-helm.dashboard.selectorLabels" . | nindent 14 }}
+      ports:
+        - port: 3210
+          protocol: TCP
+    {{- end }}
+    # Allow ingress controller traffic
+    - ports:
+        - port: 3210
+          protocol: TCP
+        - port: 3211
+          protocol: TCP
+    {{- with .Values.networkPolicy.backendIngressRules }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+{{- if .Values.dashboard.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "convex-helm.fullname" . }}-dashboard
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "convex-helm.dashboard.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "convex-helm.dashboard.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Ingress
+  ingress:
+    - ports:
+        - port: 6791
+          protocol: TCP
+    {{- with .Values.networkPolicy.dashboardIngressRules }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+{{- end }}
+{{- end }}

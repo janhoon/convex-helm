@@ -1,0 +1,35 @@
+Convex has been deployed!
+
+Backend API: {{ .Values.urls.cloudOrigin }}
+HTTP Actions: {{ .Values.urls.siteOrigin }}
+{{- if .Values.dashboard.enabled }}
+Dashboard: available via {{ include "convex-helm.fullname" . }}-dashboard service on port {{ .Values.dashboard.service.port }}
+{{- end }}
+
+{{- if and (eq .Values.database.type "sqlite") (not .Values.persistence.enabled) }}
+
+WARNING: You are using SQLite without persistence enabled. Data will be lost when the pod restarts.
+Enable persistence in your values:
+  persistence:
+    enabled: true
+{{- end }}
+
+{{- if and (eq .Values.storage.type "s3") (not .Values.storage.s3.existingSecret) (not .Values.storage.s3.accessKeyId) }}
+
+WARNING: S3 storage is configured but no credentials are provided. Set storage.s3.accessKeyId
+and storage.s3.secretAccessKey, or provide an existingSecret.
+{{- end }}
+
+To generate an admin key, exec into the backend pod:
+  kubectl exec -it deploy/{{ include "convex-helm.fullname" . }}-backend -- ./generate_admin_key.sh
+
+{{- if not .Values.ingress.enabled }}
+
+To access the backend locally:
+  kubectl port-forward svc/{{ include "convex-helm.fullname" . }}-backend {{ .Values.backend.service.apiPort }}:{{ .Values.backend.service.apiPort }}
+{{- if .Values.dashboard.enabled }}
+
+To access the dashboard locally:
+  kubectl port-forward svc/{{ include "convex-helm.fullname" . }}-dashboard {{ .Values.dashboard.service.port }}:{{ .Values.dashboard.service.port }}
+{{- end }}
+{{- end }}

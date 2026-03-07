@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "convex-helm.fullname" . }}-backend
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "convex-helm.backend.labels" . | nindent 4 }}
+  {{- with .Values.backend.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.backend.service.type }}
+  ports:
+    - name: api
+      port: {{ .Values.backend.service.apiPort }}
+      targetPort: api
+      protocol: TCP
+    - name: actions
+      port: {{ .Values.backend.service.actionsPort }}
+      targetPort: actions
+      protocol: TCP
+  selector:
+    {{- include "convex-helm.backend.selectorLabels" . | nindent 4 }}

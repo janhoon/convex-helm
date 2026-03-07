@@ -1,0 +1,47 @@
+apiVersion: v2
+name: convex-helm
+description: A Helm chart for deploying Convex backend platform to Kubernetes
+type: application
+version: 0.1.0
+appVersion: "latest"
+keywords:
+  - convex
+  - backend
+  - baas
+  - database
+  - serverless
+home: https://convex.dev
+sources:
+  - https://github.com/get-convex/convex-backend
+maintainers:
+  - name: janhoon
+icon: https://convex.dev/favicon.ico
+annotations:
+  artifacthub.io/category: database
+  artifacthub.io/license: Apache-2.0
+  artifacthub.io/links: |
+    - name: Convex Documentation
+      url: https://docs.convex.dev
+    - name: Self-Hosting Guide
+      url: https://github.com/get-convex/convex-backend/tree/main/self-hosted
+    - name: support
+      url: https://github.com/get-convex/convex-backend/issues
+  artifacthub.io/images: |
+    - name: convex-backend
+      image: ghcr.io/get-convex/convex-backend:latest
+      platforms:
+        - linux/amd64
+        - linux/arm64
+    - name: convex-dashboard
+      image: ghcr.io/get-convex/convex-dashboard:latest
+      platforms:
+        - linux/amd64
+        - linux/arm64
+  artifacthub.io/changes: |
+    - kind: added
+      description: Initial Helm chart release
+  artifacthub.io/containsSecurityUpdates: "false"
+  artifacthub.io/prerelease: "false"
+  artifacthub.io/recommendations: |
+    - url: https://artifacthub.io/packages/helm/prometheus-community/kube-prometheus-stack
+    - url: https://artifacthub.io/packages/helm/bitnami/postgresql

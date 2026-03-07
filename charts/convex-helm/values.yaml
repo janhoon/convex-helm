@@ -1,0 +1,421 @@
+## Convex Helm Chart - values.yaml
+## Refer to https://github.com/get-convex/convex-backend/tree/main/self-hosted for upstream docs.
+
+# -- Instance configuration
+instance:
+  # -- Name for this Convex instance. Also determines the database name (dashes become underscores).
+  name: convex-self-hosted
+  # -- Pre-existing secret containing the instance secret under key `instance-secret`.
+  # If empty, a secret will be auto-generated on first deploy.
+  existingSecret: ""
+  # -- Instance secret (hex string). Only used if existingSecret is empty.
+  # If left empty, the backend will auto-generate one and persist it to the data volume.
+  secret: ""
+
+# -- External URLs as seen by clients. Must be set for production deployments.
+urls:
+  # -- External URL for the backend API (port 3210). Used by SDKs to connect.
+  cloudOrigin: "http://127.0.0.1:3210"
+  # -- External URL for HTTP actions endpoint (port 3211).
+  siteOrigin: "http://127.0.0.1:3211"
+
+# =============================================================================
+# Backend
+# =============================================================================
+backend:
+  image:
+    repository: ghcr.io/get-convex/convex-backend
+    tag: "latest"
+    pullPolicy: IfNotPresent
+
+  # -- Number of replicas. Convex backend is a stateful single-instance service.
+  # DO NOT set this above 1 — the backend does not support horizontal scaling.
+  replicaCount: 1
+
+  # -- Deployment strategy. Recreate is recommended since only one instance can run.
+  strategy:
+    type: Recreate
+
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: "2"
+      memory: 4Gi
+
+  # -- Additional environment variables for the backend container.
+  extraEnv: []
+  #   - name: RUST_LOG
+  #     value: "debug"
+
+  # -- Additional environment variables from secrets/configmaps.
+  extraEnvFrom: []
+
+  # -- Pod-level security context.
+  podSecurityContext:
+    fsGroup: 1000
+
+  # -- Container-level security context.
+  securityContext: {}
+    # runAsNonRoot: true
+    # runAsUser: 1000
+
+  # -- Node selector for backend pods.
+  nodeSelector: {}
+
+  # -- Tolerations for backend pods.
+  tolerations: []
+
+  # -- Affinity rules for backend pods.
+  affinity: {}
+
+  # -- Pod annotations.
+  podAnnotations: {}
+
+  # -- Pod labels.
+  podLabels: {}
+
+  # -- Topology spread constraints.
+  topologySpreadConstraints: []
+
+  # -- Priority class name.
+  priorityClassName: ""
+
+  # -- Termination grace period in seconds.
+  terminationGracePeriodSeconds: 60
+
+  service:
+    # -- Service type for the backend.
+    type: ClusterIP
+    # -- Backend API port.
+    apiPort: 3210
+    # -- HTTP actions port.
+    actionsPort: 3211
+    annotations: {}
+
+  # -- Liveness probe configuration.
+  livenessProbe:
+    httpGet:
+      path: /version
+      port: api
+    initialDelaySeconds: 30
+    periodSeconds: 30
+    timeoutSeconds: 5
+    failureThreshold: 5
+
+  # -- Readiness probe configuration.
+  readinessProbe:
+    httpGet:
+      path: /version
+      port: api
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  # -- Startup probe configuration (gives extra time on first boot for migrations).
+  startupProbe:
+    httpGet:
+      path: /version
+      port: api
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 5
+    failureThreshold: 60
+
+# =============================================================================
+# Dashboard
+# =============================================================================
+dashboard:
+  # -- Enable the Convex dashboard.
+  enabled: true
+
+  image:
+    repository: ghcr.io/get-convex/convex-dashboard
+    tag: "latest"
+    pullPolicy: IfNotPresent
+
+  replicaCount: 1
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  # -- Additional environment variables for the dashboard container.
+  extraEnv: []
+
+  # -- Additional environment variables from secrets/configmaps.
+  extraEnvFrom: []
+
+  podSecurityContext: {}
+
+  securityContext: {}
+
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity: {}
+
+  podAnnotations: {}
+
+  podLabels: {}
+
+  priorityClassName: ""
+
+  service:
+    type: ClusterIP
+    port: 6791
+    annotations: {}
+
+  livenessProbe:
+    httpGet:
+      path: /
+      port: http
+    initialDelaySeconds: 15
+    periodSeconds: 30
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  readinessProbe:
+    httpGet:
+      path: /
+      port: http
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+# =============================================================================
+# Database configuration
+# =============================================================================
+database:
+  # -- Database backend: "sqlite", "postgres", or "mysql".
+  type: sqlite
+
+  # -- PostgreSQL connection string (without database name). Required if type is "postgres".
+  # Example: "postgresql://user:pass@host:5432"
+  postgresUrl: ""
+
+  # -- MySQL connection string (without database name). Required if type is "mysql".
+  # Example: "mysql://user:pass@host:3306"
+  mysqlUrl: ""
+
+  # -- Use an existing secret for the database URL.
+  # The secret must contain a key matching the database type: `postgres-url` or `mysql-url`.
+  existingSecret: ""
+
+  # -- Disable SSL requirement for database connections (useful for in-cluster databases).
+  doNotRequireSsl: false
+
+# =============================================================================
+# Storage configuration
+# =============================================================================
+storage:
+  # -- Storage backend: "local" or "s3".
+  type: local
+
+  s3:
+    # -- AWS region for S3 buckets.
+    region: ""
+    # -- AWS access key ID.
+    accessKeyId: ""
+    # -- AWS secret access key.
+    secretAccessKey: ""
+    # -- Optional AWS session token.
+    sessionToken: ""
+    # -- S3 endpoint URL (for S3-compatible services like MinIO, R2, DigitalOcean Spaces).
+    endpointUrl: ""
+    # -- Force path-style addressing (required for MinIO).
+    forcePathStyle: false
+    # -- Disable S3 checksums (compatibility flag).
+    disableChecksums: false
+    # -- Disable server-side encryption (compatibility flag).
+    disableSse: false
+
+    # -- S3 bucket names. All 5 are required when using S3 storage.
+    buckets:
+      exports: ""
+      snapshotImports: ""
+      modules: ""
+      files: ""
+      search: ""
+
+    # -- Use an existing secret for S3 credentials.
+    # Must contain keys: `aws-access-key-id` and `aws-secret-access-key`.
+    existingSecret: ""
+
+# =============================================================================
+# Persistence (for SQLite and local file storage)
+# =============================================================================
+persistence:
+  # -- Enable persistent storage. Required for SQLite and local file storage.
+  enabled: true
+
+  # -- Storage class name. Leave empty for default.
+  storageClassName: ""
+
+  # -- Access modes for the PVC.
+  accessModes:
+    - ReadWriteOnce
+
+  # -- Size of the persistent volume.
+  size: 10Gi
+
+  # -- Annotations for the PVC.
+  annotations: {}
+
+  # -- Use an existing PVC instead of creating one.
+  existingClaim: ""
+
+# =============================================================================
+# Ingress
+# =============================================================================
+ingress:
+  # -- Enable ingress resources.
+  enabled: false
+
+  # -- Ingress class name (e.g., "nginx", "traefik").
+  className: ""
+
+  # -- Annotations for the ingress resource.
+  annotations: {}
+    # cert-manager.io/cluster-issuer: letsencrypt-prod
+
+  # -- Ingress for the backend API (port 3210).
+  backend:
+    host: ""
+    tls: []
+    #   - secretName: convex-backend-tls
+    #     hosts:
+    #       - convex-api.example.com
+
+  # -- Ingress for HTTP actions (port 3211).
+  actions:
+    host: ""
+    tls: []
+
+  # -- Ingress for the dashboard (port 6791).
+  dashboard:
+    host: ""
+    tls: []
+
+# =============================================================================
+# Service Account
+# =============================================================================
+serviceAccount:
+  # -- Create a service account.
+  create: true
+  # -- Annotations for the service account.
+  annotations: {}
+  # -- Name of the service account. Auto-generated if empty.
+  name: ""
+
+# =============================================================================
+# Image Pull Secrets
+# =============================================================================
+imagePullSecrets: []
+
+# -- Override chart name.
+nameOverride: ""
+# -- Override full chart name.
+fullnameOverride: ""
+
+# =============================================================================
+# Observability
+# =============================================================================
+metrics:
+  # -- Enable the Prometheus metrics endpoint on the backend (/metrics on port 3210).
+  enabled: false
+
+  serviceMonitor:
+    # -- Create a ServiceMonitor resource for Prometheus Operator.
+    enabled: false
+    # -- Namespace for the ServiceMonitor. Defaults to release namespace.
+    namespace: ""
+    # -- Scrape interval.
+    interval: 30s
+    # -- Scrape timeout.
+    scrapeTimeout: 10s
+    # -- Additional labels for the ServiceMonitor (e.g., for Prometheus selector).
+    labels: {}
+    # -- Metric relabeling configs.
+    metricRelabelings: []
+    # -- Relabeling configs.
+    relabelings: []
+
+  prometheusRule:
+    # -- Create PrometheusRule resources for alerting.
+    enabled: false
+    # -- Namespace for the PrometheusRule. Defaults to release namespace.
+    namespace: ""
+    # -- Additional labels for the PrometheusRule.
+    labels: {}
+    # -- Alert rules. See values below for examples.
+    rules: []
+    #   - alert: ConvexBackendDown
+    #     expr: up{job="{{ include \"convex-helm.fullname\" . }}-backend"} == 0
+    #     for: 5m
+    #     labels:
+    #       severity: critical
+    #     annotations:
+    #       summary: "Convex backend is down"
+
+# =============================================================================
+# Logging
+# =============================================================================
+logging:
+  # -- Rust log level for the backend. Options: error, warn, info, debug, trace.
+  level: info
+  # -- Redact sensitive data from log output sent to clients.
+  redactLogsToClient: false
+
+# =============================================================================
+# Concurrency tuning
+# =============================================================================
+concurrency:
+  # -- Max concurrent queries.
+  maxConcurrentQueries: ""
+  # -- Max concurrent mutations.
+  maxConcurrentMutations: ""
+  # -- Max concurrent V8 actions.
+  maxConcurrentV8Actions: ""
+  # -- Max concurrent Node.js actions.
+  maxConcurrentNodeActions: ""
+  # -- Action timeout in seconds.
+  actionsUserTimeoutSecs: ""
+  # -- Document retention delay in seconds.
+  documentRetentionDelay: ""
+
+# =============================================================================
+# Telemetry
+# =============================================================================
+telemetry:
+  # -- Disable anonymous usage telemetry beacon.
+  disableBeacon: false
+
+# =============================================================================
+# Network Policies
+# =============================================================================
+networkPolicy:
+  # -- Enable network policies.
+  enabled: false
+  # -- Additional ingress rules for the backend.
+  backendIngressRules: []
+  # -- Additional ingress rules for the dashboard.
+  dashboardIngressRules: []
+
+# =============================================================================
+# Pod Disruption Budget
+# =============================================================================
+podDisruptionBudget:
+  # -- Enable PDB for the backend.
+  enabled: false
+  # -- Min available pods. Since backend is single-instance, this protects against
+  # voluntary disruptions (e.g., node drains) by blocking them until you're ready.
+  minAvailable: 1
