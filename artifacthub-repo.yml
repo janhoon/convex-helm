@@ -1,6 +1,0 @@
-# Artifact Hub repository metadata file
-# https://artifacthub.io/docs/topics/repositories/
-repositoryID: # Set this to your Artifact Hub repository ID to enable verified publisher
-owners:
-  - name: janhoon
-    email: janhoon97@gmail.com
