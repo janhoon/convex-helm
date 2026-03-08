@@ -10,7 +10,7 @@ A Helm chart for deploying Convex backend platform to Kubernetes
 
 | Name | Email | Url |
 | ---- | ------ | --- |
-| janhoon |  |  |
+| janhoon | <janhoon97@gmail.com> | <https://github.com/janhoon> |
 
 ## Source Code
 
