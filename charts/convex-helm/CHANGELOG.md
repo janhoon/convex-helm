@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.3](https://github.com/janhoon/convex-helm/compare/convex-helm-v0.2.2...convex-helm-v0.2.3) (2026-03-08)
+
+
+### Bug Fixes
+
+* convex chart path ([adfca04](https://github.com/janhoon/convex-helm/commit/adfca046ca805d2e76495a5522968132423c2486))
+
 ## [0.2.2](https://github.com/janhoon/convex-helm/compare/convex-helm-v0.2.1...convex-helm-v0.2.2) (2026-03-08)
 
 
