@@ -1,0 +1,47 @@
+## Development overrides for local testing with Tilt
+
+instance:
+  name: convex-dev
+
+urls:
+  cloudOrigin: "http://127.0.0.1:3210"
+  siteOrigin: "http://127.0.0.1:3211"
+
+backend:
+  image:
+    pullPolicy: Always
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 2Gi
+
+dashboard:
+  enabled: true
+  image:
+    pullPolicy: Always
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+
+database:
+  type: sqlite
+
+storage:
+  type: local
+
+persistence:
+  enabled: true
+  size: 5Gi
+
+logging:
+  level: debug
+
+telemetry:
+  disableBeacon: true

@@ -1,0 +1,773 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "instance": {
+      "type": "object",
+      "description": "Instance configuration",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name for this Convex instance. Also determines the database name (dashes become underscores).",
+          "default": "convex-self-hosted"
+        },
+        "existingSecret": {
+          "type": "string",
+          "description": "Pre-existing secret containing the instance secret under key 'instance-secret'. If empty, a secret will be auto-generated on first deploy.",
+          "default": ""
+        },
+        "secret": {
+          "type": "string",
+          "description": "Instance secret (hex string). Only used if existingSecret is empty.",
+          "default": ""
+        }
+      }
+    },
+    "urls": {
+      "type": "object",
+      "description": "External URLs as seen by clients. Must be set for production deployments.",
+      "properties": {
+        "cloudOrigin": {
+          "type": "string",
+          "description": "External URL for the backend API (port 3210). Used by SDKs to connect.",
+          "default": "http://127.0.0.1:3210"
+        },
+        "siteOrigin": {
+          "type": "string",
+          "description": "External URL for HTTP actions endpoint (port 3211).",
+          "default": "http://127.0.0.1:3211"
+        }
+      }
+    },
+    "backend": {
+      "type": "object",
+      "description": "Backend deployment configuration",
+      "properties": {
+        "image": {
+          "type": "object",
+          "properties": {
+            "repository": {
+              "type": "string",
+              "description": "Container image repository.",
+              "default": "ghcr.io/get-convex/convex-backend"
+            },
+            "tag": {
+              "type": "string",
+              "description": "Container image tag.",
+              "default": "latest"
+            },
+            "pullPolicy": {
+              "type": "string",
+              "description": "Image pull policy.",
+              "enum": ["Always", "IfNotPresent", "Never"],
+              "default": "IfNotPresent"
+            }
+          }
+        },
+        "replicaCount": {
+          "type": "integer",
+          "description": "Number of replicas. DO NOT set above 1 — the backend does not support horizontal scaling.",
+          "minimum": 1,
+          "maximum": 1,
+          "default": 1
+        },
+        "strategy": {
+          "type": "object",
+          "description": "Deployment strategy.",
+          "properties": {
+            "type": {
+              "type": "string",
+              "description": "Deployment strategy type. Recreate is recommended since only one instance can run.",
+              "enum": ["Recreate", "RollingUpdate"],
+              "default": "Recreate"
+            }
+          }
+        },
+        "resources": {
+          "type": "object",
+          "description": "Resource requests and limits.",
+          "properties": {
+            "requests": {
+              "type": "object",
+              "properties": {
+                "cpu": { "type": "string" },
+                "memory": { "type": "string" }
+              }
+            },
+            "limits": {
+              "type": "object",
+              "properties": {
+                "cpu": { "type": "string" },
+                "memory": { "type": "string" }
+              }
+            }
+          }
+        },
+        "extraEnv": {
+          "type": "array",
+          "description": "Additional environment variables for the backend container.",
+          "items": { "type": "object" },
+          "default": []
+        },
+        "extraEnvFrom": {
+          "type": "array",
+          "description": "Additional environment variables from secrets/configmaps.",
+          "items": { "type": "object" },
+          "default": []
+        },
+        "podSecurityContext": {
+          "type": "object",
+          "description": "Pod-level security context."
+        },
+        "securityContext": {
+          "type": "object",
+          "description": "Container-level security context."
+        },
+        "nodeSelector": {
+          "type": "object",
+          "description": "Node selector for backend pods."
+        },
+        "tolerations": {
+          "type": "array",
+          "description": "Tolerations for backend pods.",
+          "items": { "type": "object" },
+          "default": []
+        },
+        "affinity": {
+          "type": "object",
+          "description": "Affinity rules for backend pods."
+        },
+        "podAnnotations": {
+          "type": "object",
+          "description": "Pod annotations."
+        },
+        "podLabels": {
+          "type": "object",
+          "description": "Pod labels."
+        },
+        "topologySpreadConstraints": {
+          "type": "array",
+          "description": "Topology spread constraints.",
+          "items": { "type": "object" },
+          "default": []
+        },
+        "priorityClassName": {
+          "type": "string",
+          "description": "Priority class name.",
+          "default": ""
+        },
+        "terminationGracePeriodSeconds": {
+          "type": "integer",
+          "description": "Termination grace period in seconds.",
+          "default": 60
+        },
+        "service": {
+          "type": "object",
+          "description": "Backend service configuration.",
+          "properties": {
+            "type": {
+              "type": "string",
+              "description": "Service type.",
+              "enum": ["ClusterIP", "NodePort", "LoadBalancer"],
+              "default": "ClusterIP"
+            },
+            "apiPort": {
+              "type": "integer",
+              "description": "Backend API port.",
+              "default": 3210
+            },
+            "actionsPort": {
+              "type": "integer",
+              "description": "HTTP actions port.",
+              "default": 3211
+            },
+            "annotations": {
+              "type": "object",
+              "description": "Service annotations."
+            }
+          }
+        },
+        "livenessProbe": {
+          "type": "object",
+          "description": "Liveness probe configuration."
+        },
+        "readinessProbe": {
+          "type": "object",
+          "description": "Readiness probe configuration."
+        },
+        "startupProbe": {
+          "type": "object",
+          "description": "Startup probe configuration."
+        }
+      }
+    },
+    "dashboard": {
+      "type": "object",
+      "description": "Dashboard deployment configuration",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable the Convex dashboard.",
+          "default": true
+        },
+        "image": {
+          "type": "object",
+          "properties": {
+            "repository": {
+              "type": "string",
+              "description": "Container image repository.",
+              "default": "ghcr.io/get-convex/convex-dashboard"
+            },
+            "tag": {
+              "type": "string",
+              "description": "Container image tag.",
+              "default": "latest"
+            },
+            "pullPolicy": {
+              "type": "string",
+              "description": "Image pull policy.",
+              "enum": ["Always", "IfNotPresent", "Never"],
+              "default": "IfNotPresent"
+            }
+          }
+        },
+        "replicaCount": {
+          "type": "integer",
+          "description": "Number of dashboard replicas.",
+          "minimum": 1,
+          "default": 1
+        },
+        "resources": {
+          "type": "object",
+          "description": "Resource requests and limits.",
+          "properties": {
+            "requests": {
+              "type": "object",
+              "properties": {
+                "cpu": { "type": "string" },
+                "memory": { "type": "string" }
+              }
+            },
+            "limits": {
+              "type": "object",
+              "properties": {
+                "cpu": { "type": "string" },
+                "memory": { "type": "string" }
+              }
+            }
+          }
+        },
+        "extraEnv": {
+          "type": "array",
+          "description": "Additional environment variables for the dashboard container.",
+          "items": { "type": "object" },
+          "default": []
+        },
+        "extraEnvFrom": {
+          "type": "array",
+          "description": "Additional environment variables from secrets/configmaps.",
+          "items": { "type": "object" },
+          "default": []
+        },
+        "podSecurityContext": {
+          "type": "object",
+          "description": "Pod-level security context."
+        },
+        "securityContext": {
+          "type": "object",
+          "description": "Container-level security context."
+        },
+        "nodeSelector": {
+          "type": "object",
+          "description": "Node selector for dashboard pods."
+        },
+        "tolerations": {
+          "type": "array",
+          "description": "Tolerations for dashboard pods.",
+          "items": { "type": "object" },
+          "default": []
+        },
+        "affinity": {
+          "type": "object",
+          "description": "Affinity rules for dashboard pods."
+        },
+        "podAnnotations": {
+          "type": "object",
+          "description": "Pod annotations."
+        },
+        "podLabels": {
+          "type": "object",
+          "description": "Pod labels."
+        },
+        "priorityClassName": {
+          "type": "string",
+          "description": "Priority class name.",
+          "default": ""
+        },
+        "service": {
+          "type": "object",
+          "description": "Dashboard service configuration.",
+          "properties": {
+            "type": {
+              "type": "string",
+              "description": "Service type.",
+              "enum": ["ClusterIP", "NodePort", "LoadBalancer"],
+              "default": "ClusterIP"
+            },
+            "port": {
+              "type": "integer",
+              "description": "Dashboard port.",
+              "default": 6791
+            },
+            "annotations": {
+              "type": "object",
+              "description": "Service annotations."
+            }
+          }
+        },
+        "livenessProbe": {
+          "type": "object",
+          "description": "Liveness probe configuration."
+        },
+        "readinessProbe": {
+          "type": "object",
+          "description": "Readiness probe configuration."
+        }
+      }
+    },
+    "database": {
+      "type": "object",
+      "description": "Database configuration",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Database backend.",
+          "enum": ["sqlite", "postgres", "mysql"],
+          "default": "sqlite"
+        },
+        "postgresUrl": {
+          "type": "string",
+          "description": "PostgreSQL connection string (without database name). Required if type is 'postgres'.",
+          "default": ""
+        },
+        "mysqlUrl": {
+          "type": "string",
+          "description": "MySQL connection string (without database name). Required if type is 'mysql'.",
+          "default": ""
+        },
+        "existingSecret": {
+          "type": "string",
+          "description": "Use an existing secret for the database URL. Must contain a key matching the database type: 'postgres-url' or 'mysql-url'.",
+          "default": ""
+        },
+        "doNotRequireSsl": {
+          "type": "boolean",
+          "description": "Disable SSL requirement for database connections (useful for in-cluster databases).",
+          "default": false
+        }
+      }
+    },
+    "storage": {
+      "type": "object",
+      "description": "Storage configuration",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Storage backend.",
+          "enum": ["local", "s3"],
+          "default": "local"
+        },
+        "s3": {
+          "type": "object",
+          "description": "S3 storage configuration.",
+          "properties": {
+            "region": {
+              "type": "string",
+              "description": "AWS region for S3 buckets.",
+              "default": ""
+            },
+            "accessKeyId": {
+              "type": "string",
+              "description": "AWS access key ID.",
+              "default": ""
+            },
+            "secretAccessKey": {
+              "type": "string",
+              "description": "AWS secret access key.",
+              "default": ""
+            },
+            "sessionToken": {
+              "type": "string",
+              "description": "Optional AWS session token.",
+              "default": ""
+            },
+            "endpointUrl": {
+              "type": "string",
+              "description": "S3 endpoint URL (for S3-compatible services like MinIO, R2, DigitalOcean Spaces).",
+              "default": ""
+            },
+            "forcePathStyle": {
+              "type": "boolean",
+              "description": "Force path-style addressing (required for MinIO).",
+              "default": false
+            },
+            "disableChecksums": {
+              "type": "boolean",
+              "description": "Disable S3 checksums (compatibility flag).",
+              "default": false
+            },
+            "disableSse": {
+              "type": "boolean",
+              "description": "Disable server-side encryption (compatibility flag).",
+              "default": false
+            },
+            "buckets": {
+              "type": "object",
+              "description": "S3 bucket names. All 5 are required when using S3 storage.",
+              "properties": {
+                "exports": { "type": "string", "default": "" },
+                "snapshotImports": { "type": "string", "default": "" },
+                "modules": { "type": "string", "default": "" },
+                "files": { "type": "string", "default": "" },
+                "search": { "type": "string", "default": "" }
+              }
+            },
+            "existingSecret": {
+              "type": "string",
+              "description": "Use an existing secret for S3 credentials. Must contain keys: 'aws-access-key-id' and 'aws-secret-access-key'.",
+              "default": ""
+            }
+          }
+        }
+      }
+    },
+    "persistence": {
+      "type": "object",
+      "description": "Persistence configuration for SQLite and local file storage",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable persistent storage. Required for SQLite and local file storage.",
+          "default": true
+        },
+        "storageClassName": {
+          "type": "string",
+          "description": "Storage class name. Leave empty for default.",
+          "default": ""
+        },
+        "accessModes": {
+          "type": "array",
+          "description": "Access modes for the PVC.",
+          "items": {
+            "type": "string",
+            "enum": ["ReadWriteOnce", "ReadOnlyMany", "ReadWriteMany"]
+          },
+          "default": ["ReadWriteOnce"]
+        },
+        "size": {
+          "type": "string",
+          "description": "Size of the persistent volume.",
+          "default": "10Gi"
+        },
+        "annotations": {
+          "type": "object",
+          "description": "Annotations for the PVC."
+        },
+        "existingClaim": {
+          "type": "string",
+          "description": "Use an existing PVC instead of creating one.",
+          "default": ""
+        }
+      }
+    },
+    "ingress": {
+      "type": "object",
+      "description": "Ingress configuration",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable ingress resources.",
+          "default": false
+        },
+        "className": {
+          "type": "string",
+          "description": "Ingress class name (e.g., 'nginx', 'traefik').",
+          "default": ""
+        },
+        "annotations": {
+          "type": "object",
+          "description": "Annotations for the ingress resource."
+        },
+        "backend": {
+          "type": "object",
+          "description": "Ingress for the backend API (port 3210).",
+          "properties": {
+            "host": {
+              "type": "string",
+              "description": "Hostname for the backend ingress.",
+              "default": ""
+            },
+            "tls": {
+              "type": "array",
+              "description": "TLS configuration.",
+              "items": { "type": "object" },
+              "default": []
+            }
+          }
+        },
+        "actions": {
+          "type": "object",
+          "description": "Ingress for HTTP actions (port 3211).",
+          "properties": {
+            "host": {
+              "type": "string",
+              "description": "Hostname for the actions ingress.",
+              "default": ""
+            },
+            "tls": {
+              "type": "array",
+              "description": "TLS configuration.",
+              "items": { "type": "object" },
+              "default": []
+            }
+          }
+        },
+        "dashboard": {
+          "type": "object",
+          "description": "Ingress for the dashboard (port 6791).",
+          "properties": {
+            "host": {
+              "type": "string",
+              "description": "Hostname for the dashboard ingress.",
+              "default": ""
+            },
+            "tls": {
+              "type": "array",
+              "description": "TLS configuration.",
+              "items": { "type": "object" },
+              "default": []
+            }
+          }
+        }
+      }
+    },
+    "serviceAccount": {
+      "type": "object",
+      "description": "Service account configuration",
+      "properties": {
+        "create": {
+          "type": "boolean",
+          "description": "Create a service account.",
+          "default": true
+        },
+        "annotations": {
+          "type": "object",
+          "description": "Annotations for the service account."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the service account. Auto-generated if empty.",
+          "default": ""
+        }
+      }
+    },
+    "imagePullSecrets": {
+      "type": "array",
+      "description": "Image pull secrets.",
+      "items": { "type": "object" },
+      "default": []
+    },
+    "nameOverride": {
+      "type": "string",
+      "description": "Override chart name.",
+      "default": ""
+    },
+    "fullnameOverride": {
+      "type": "string",
+      "description": "Override full chart name.",
+      "default": ""
+    },
+    "metrics": {
+      "type": "object",
+      "description": "Observability configuration",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable the Prometheus metrics endpoint on the backend (/metrics on port 3210).",
+          "default": false
+        },
+        "serviceMonitor": {
+          "type": "object",
+          "description": "ServiceMonitor configuration for Prometheus Operator.",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Create a ServiceMonitor resource.",
+              "default": false
+            },
+            "namespace": {
+              "type": "string",
+              "description": "Namespace for the ServiceMonitor. Defaults to release namespace.",
+              "default": ""
+            },
+            "interval": {
+              "type": "string",
+              "description": "Scrape interval.",
+              "default": "30s"
+            },
+            "scrapeTimeout": {
+              "type": "string",
+              "description": "Scrape timeout.",
+              "default": "10s"
+            },
+            "labels": {
+              "type": "object",
+              "description": "Additional labels for the ServiceMonitor."
+            },
+            "metricRelabelings": {
+              "type": "array",
+              "description": "Metric relabeling configs.",
+              "items": { "type": "object" },
+              "default": []
+            },
+            "relabelings": {
+              "type": "array",
+              "description": "Relabeling configs.",
+              "items": { "type": "object" },
+              "default": []
+            }
+          }
+        },
+        "prometheusRule": {
+          "type": "object",
+          "description": "PrometheusRule configuration for alerting.",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Create PrometheusRule resources.",
+              "default": false
+            },
+            "namespace": {
+              "type": "string",
+              "description": "Namespace for the PrometheusRule. Defaults to release namespace.",
+              "default": ""
+            },
+            "labels": {
+              "type": "object",
+              "description": "Additional labels for the PrometheusRule."
+            },
+            "rules": {
+              "type": "array",
+              "description": "Alert rules.",
+              "items": { "type": "object" },
+              "default": []
+            }
+          }
+        }
+      }
+    },
+    "logging": {
+      "type": "object",
+      "description": "Logging configuration",
+      "properties": {
+        "level": {
+          "type": "string",
+          "description": "Rust log level for the backend.",
+          "enum": ["error", "warn", "info", "debug", "trace"],
+          "default": "info"
+        },
+        "redactLogsToClient": {
+          "type": "boolean",
+          "description": "Redact sensitive data from log output sent to clients.",
+          "default": false
+        }
+      }
+    },
+    "concurrency": {
+      "type": "object",
+      "description": "Concurrency tuning",
+      "properties": {
+        "maxConcurrentQueries": {
+          "type": "string",
+          "description": "Max concurrent queries.",
+          "default": ""
+        },
+        "maxConcurrentMutations": {
+          "type": "string",
+          "description": "Max concurrent mutations.",
+          "default": ""
+        },
+        "maxConcurrentV8Actions": {
+          "type": "string",
+          "description": "Max concurrent V8 actions.",
+          "default": ""
+        },
+        "maxConcurrentNodeActions": {
+          "type": "string",
+          "description": "Max concurrent Node.js actions.",
+          "default": ""
+        },
+        "actionsUserTimeoutSecs": {
+          "type": "string",
+          "description": "Action timeout in seconds.",
+          "default": ""
+        },
+        "documentRetentionDelay": {
+          "type": "string",
+          "description": "Document retention delay in seconds.",
+          "default": ""
+        }
+      }
+    },
+    "telemetry": {
+      "type": "object",
+      "description": "Telemetry configuration",
+      "properties": {
+        "disableBeacon": {
+          "type": "boolean",
+          "description": "Disable anonymous usage telemetry beacon.",
+          "default": false
+        }
+      }
+    },
+    "networkPolicy": {
+      "type": "object",
+      "description": "Network policy configuration",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable network policies.",
+          "default": false
+        },
+        "backendIngressRules": {
+          "type": "array",
+          "description": "Additional ingress rules for the backend.",
+          "items": { "type": "object" },
+          "default": []
+        },
+        "dashboardIngressRules": {
+          "type": "array",
+          "description": "Additional ingress rules for the dashboard.",
+          "items": { "type": "object" },
+          "default": []
+        }
+      }
+    },
+    "podDisruptionBudget": {
+      "type": "object",
+      "description": "Pod disruption budget configuration",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable PDB for the backend.",
+          "default": false
+        },
+        "minAvailable": {
+          "type": "integer",
+          "description": "Min available pods.",
+          "default": 1
+        }
+      }
+    }
+  }
+}
