@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.4](https://github.com/janhoon/convex-helm/compare/convex-helm-v0.2.3...convex-helm-v0.2.4) (2026-03-08)
+
+
+### Bug Fixes
+
+* use PNG icon URL for artifact hub compatibility ([d0d7756](https://github.com/janhoon/convex-helm/commit/d0d7756e0682f31fa68d5775495f826a3a895332))
+
 ## [0.2.3](https://github.com/janhoon/convex-helm/compare/convex-helm-v0.2.2...convex-helm-v0.2.3) (2026-03-08)
 
 
