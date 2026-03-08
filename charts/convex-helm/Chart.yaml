@@ -17,7 +17,7 @@ maintainers:
   - name: janhoon
     email: janhoon97@gmail.com
     url: https://github.com/janhoon
-icon: https://convex.dev/favicon.ico
+icon: https://avatars.githubusercontent.com/u/81530787
 annotations:
   artifacthub.io/category: database
   artifacthub.io/license: Apache-2.0
